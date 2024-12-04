@@ -1,0 +1,54 @@
+from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
+
+def translate_text(article, source_lang, target_lang):
+    """
+    Traduit un texte d'une langue source à une langue cible en utilisant mBART-50.
+
+    Args:
+    - article (str): Le texte à traduire.
+    - source_lang (str): Code de la langue source (ex: 'fr_XX').
+    - target_lang (str): Code de la langue cible (ex: 'en_XX').
+
+    Returns:
+    - str: Le texte traduit.
+    """
+    # Charger le modèle et le tokenizer
+    model = MBartForConditionalGeneration.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
+    tokenizer = MBart50TokenizerFast.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
+
+    # Configurer la langue source
+    tokenizer.src_lang = source_lang
+
+    # Encoder l'article
+    encoded_input = tokenizer(article, return_tensors="pt")
+
+    # Générer la traduction
+    generated_tokens = model.generate(
+        **encoded_input,
+        forced_bos_token_id=tokenizer.lang_code_to_id[target_lang]
+    )
+
+    # Décoder et retourner la traduction
+    translated_text = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
+    return translated_text
+
+if __name__ == "__main__":
+    print("Bienvenue dans le traducteur multilingue !")
+    while True:
+        # Demander le texte à traduire
+        text = input("Entrez le texte à traduire (ou tapez 'exit' pour quitter) : ").strip()
+        if text.lower() == "exit":
+            print("Au revoir !")
+            break
+
+        # Demander la langue source
+        source_lang = input("Entrez le code de la langue source (ex : 'fr_XX' pour français) : ").strip()
+        # Demander la langue cible
+        target_lang = input("Entrez le code de la langue cible (ex : 'en_XX' pour anglais) : ").strip()
+
+        # Traduire le texte
+        try:
+            translation = translate_text(text, source_lang, target_lang)
+            print(f"Traduction : {translation}")
+        except Exception as e:
+            print(f"Erreur lors de la traduction : {e}")
