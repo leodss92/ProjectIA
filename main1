@@ -1,0 +1,61 @@
+import requests
+
+# URL de l'API Hugging Face et autorisation
+API_URL = "https://api-inference.huggingface.co/models/facebook/mbart-large-50-many-to-many-mmt"
+headers = {"Authorization": "Bearer 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"}
+
+
+def translate_text(input_text, source_lang, target_lang):
+    """
+    Traduit un texte d'une langue source à une langue cible en utilisant l'API Hugging Face.
+
+    Args:
+    - input_text (str): Texte à traduire.
+    - source_lang (str): Code de la langue source.
+    - target_lang (str): Code de la langue cible.
+
+    Returns:
+    - str: Texte traduit.
+    """
+    payload = {
+        "inputs": input_text,
+        "parameters": {
+            "src_lang": source_lang,
+            "tgt_lang": target_lang
+        }
+    }
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()  # Vérifie les erreurs HTTP
+        translated_text = response.json()
+
+        # Vérifie si la réponse contient bien une traduction
+        if "error" in translated_text:
+            print(f"Erreur : {translated_text['error']}")
+            return None
+        return translated_text[0]["translation_text"]
+    except Exception as e:
+        print(f"Erreur lors de la traduction : {e}")
+        return None
+
+
+if _name_ == "_main_":
+    print("Bienvenue dans le traducteur interactif !")
+
+    while True:
+        # Demander les langues source et cible
+        source_lang = input(
+            "Entrez le code de la langue source (par exemple, 'fr' pour français, 'en' pour anglais) : ").strip()
+        target_lang = input(
+            "Entrez le code de la langue cible (par exemple, 'fr' pour français, 'en' pour anglais) : ").strip()
+
+        # Demander le texte à traduire
+        text = input("Entrez le texte à traduire (ou tapez 'exit' pour quitter) : ").strip()
+        if text.lower() == "exit":
+            print("Au revoir !")
+            break
+
+        # Appeler la fonction de traduction
+        translation = translate_text(text, source_lang, target_lang)
+        if translation:
+            print(f"Traduction : {translation}")
